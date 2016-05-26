@@ -1,0 +1,17 @@
+{
+    "manifest_version": 2,
+    "name": "Slither.io Bot",
+    "version": "1",
+    "content_scripts": [
+	{
+	    "matches": [
+		"*://slither.io/*"
+		//"<all_urls>"
+	    ],
+	    "js": ["net.js", "content.js"] // files executed in order of listing
+	}
+    ]
+    /*"background": {
+	"scripts": ["net.js"]
+    }*/
+}
