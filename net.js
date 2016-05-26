@@ -30,6 +30,12 @@ function createNet(s){
 		    value: [0, 0],
 		    edges: []
 		};
+
+		// add a self-loop to conserve energy
+		edge.dst.edges.push({
+		    dst: edge.dst,
+		    value: getThreshold()
+		});
 	    }else
 		edge.dst = nodes[edge.dst];
 	}
