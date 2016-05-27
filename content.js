@@ -7,7 +7,7 @@ function startBot(){
     var net = createNet(getNet('c_elegans'));
     console.log('net loaded');
     
-    window.onmousemove = function(){};
+    // window.onmousemove = function(){};
     function setDelayInterval(f, t){
 	console.log('starting bot loop');
 	function delayInterval(){
