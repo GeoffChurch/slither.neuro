@@ -69,7 +69,7 @@ function createNet(s){
     };
 
     net.setInput = function(input){
-	console.log('input:', input);
+	//console.log('input:', input);
 	for(var i in input)
 	    this.inputs[i].value[this.T] += getThreshold()*input[i];
     }
@@ -81,8 +81,9 @@ function createNet(s){
 	    var value = this.outputs[i].value;
 	    output[i] = value[this.T];
 	    value[this.T] = 0;
+	    //if(value[0] || value[1]) alert('value:', value[0], value[1]);
 	}
-	console.log('output:',output);
+	//console.log('output:',output);
 	return output
     }
     //
@@ -196,13 +197,17 @@ function getNet(name){
 	    "ASJL", "ASJR"],
 	
 	outputs: [
-	    // 30 muscle neurons (slither.io has no use for MVULVA).
-	    "MDL01", "MDR01",
-	    "MDL02", "MDR02",
-	    "MDL03", "MDR03",
-	    "MDL04", "MDR04",
-	    "MDL05", "MDR05",
-	    "MDL06", "MDR06",
+	    // 68 muscle neurons (slither.io has no use for MVULVA).
+	    /*
+	      "MDL01", "MDR01",
+	      "MDL02", "MDR02",
+	      "MDL03", "MDR03",
+	      "MDL04", "MDR04",
+	      "MDL05", "MDR05",
+	      "MDL06", "MDR06",
+	    */
+
+	    // 34 dorsal muscles
 	    "MDL07", "MDR07",
 	    "MDL08", "MDR08",
 	    "MDL09", "MDR09",
@@ -211,7 +216,35 @@ function getNet(name){
 	    "MDL12", "MDR12",
 	    "MDL13", "MDR13",
 	    "MDL14", "MDR14",
-	    "MDL15", "MDR15"],
+	    "MDL15", "MDR15",
+	    "MDL16", "MDR16",
+	    "MDL17", "MDR17",
+	    "MDL18", "MDR18",
+	    "MDL19", "MDR19",
+	    "MDL20", "MDR20",
+	    "MDL21", "MDR21",
+	    "MDL22", "MDR22",
+	    "MDL23", "MDR23",
+
+	    // 34 ventral muscles
+	    "MVL07", "MVR07",
+	    "MVL08", "MVR08",
+	    "MVL09", "MVR09",
+	    "MVL10", "MVR10",
+	    "MVL11", "MVR11",
+	    "MVL12", "MVR12",
+	    "MVL13", "MVR13",
+	    "MVL14", "MVR14",
+	    "MVL15", "MVR15",
+	    "MVL16", "MVR16",
+	    "MVL17", "MVR17",
+	    "MVL18", "MVR18",
+	    "MVL19", "MVR19",
+	    "MVL20", "MVR20",
+	    "MVL21", "MVR21",
+	    "MVL22", "MVR22",
+	    "MVL23", "MVR23",
+	],
 	
 	nodes: {
 	    ADAL: {
@@ -219,11 +252,7 @@ function getNet(name){
 		edges: [
 		    {
 			dst: 'ADAR',
-			value: 1
-		    },
-		    {
-			dst: 'ADAR',
-			value: 1
+			value: 2
 		    },
 		    {
 			dst: 'ADFL',
