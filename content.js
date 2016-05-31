@@ -21,12 +21,15 @@ function startBot(){
     
     function botLoop(){
 	s = window.snake;
-	if(!s) return; // not currently in game
+	if(!s){ // not currently in game, so start one
+	    document.getElementById('nick').value = 'Wormulus';
+	    document.getElementById('playh').children[0].click();
+	    return;
+	}
 
 	var yoverx = ym / xm;
 	var mangle = Math.atan2(ym, xm); // in range [-pi, pi]
 	var PI = Math.PI;
-	console.log('mangle:', mangle / PI,'/ PI');
 	var twoPI = PI + PI; // TODO do we need this?
 	var halfPI = PI / 2;
 	
@@ -87,8 +90,6 @@ function startBot(){
 	var scale = Math.abs(257 / (max ? max : 0.001)); // if our vector is less than 256 slither.io disregards it
 	xm *= scale;
 	ym *= scale;
-	
-	console.log(xm, ym);
     }
 
     console.log('starting bot loop');
