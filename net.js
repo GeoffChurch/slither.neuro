@@ -70,8 +70,9 @@ function createNet(s){
 
     net.setInput = function(input){
 	//console.log('input:', input);
+	var THRESHOLD = getThreshold();
 	for(var i in input)
-	    this.inputs[i].value[this.T] += getThreshold()*input[i];
+	    this.inputs[i].value[this.T] += THRESHOLD * input[i];
     }
 
     net.getOutput = function(){

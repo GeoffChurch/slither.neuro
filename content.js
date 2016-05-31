@@ -18,6 +18,37 @@ function startBot(){
 	};
 	delayInterval();
     }
+
+    function getTarget(){
+	var tX = 0;
+	var tY = 0;
+	
+	for(var i = 0; i != foods.length; i++){
+	    var f = foods[i];
+	    if(!f)
+		continue;
+	    var dx = (f.rx - snake.xx);//s.pts[s.pts.length - 1].xx); // dx > 0 -> food is to our right
+	    var dy = (f.ry - snake.yy);//s.pts[s.pts.length - 1].yy); // dy > 0 -> food is below us
+	    var d = Math.pow(dx * dx + dy * dy, 0.5); // L2
+	    //var d = Math.abs(dx) + Math.abs(dy); // L1
+	    var size = f.sz;
+	    var val = size / (d * d);
+	    // TODO ignore food that's too close
+	    tX += dx * val;
+	    tY += dy * val;
+	    //var fangle = Math.atan2(dy, dx); // fangle > 0 -> food is below us
+	    //var dangle = fangle - mangle; // abs(dangle) > pi -> turn right
+	    //sum += (Math.abs(dangle) - PI) * size / d;
+
+	    f.rad = size / 5; // just for visuals
+	}
+	return [tX, tY];
+    }
+
+    function normATAN(y, x){ // return atan in range [0, 2*PI]
+	var ret = Math.atan2(y, x);
+	return ret >= 0 ? ret : Math.PI - ret;
+    }
     
     function botLoop(){
 	s = window.snake;
@@ -27,61 +58,82 @@ function startBot(){
 	    return;
 	}
 
-	var yoverx = ym / xm;
-	var mangle = Math.atan2(ym, xm); // in range [-pi, pi]
+	// reset zoom and acceleration
+	window.gsc = 0.4;
+	setAcceleration(0);
+
+	// get target point
+	var target = getTarget();
+	var tX = target[0];
+	var tY = target[1];
+
 	var PI = Math.PI;
-	var twoPI = PI + PI; // TODO do we need this?
-	var halfPI = PI / 2;
+	var twoPI = PI + PI;
 	
-	// turn left or right?
-	var sum = 0;
+	// get current angle
+	var mangle = Math.atan2(window.ym, window.xm);
+	
+	// get target angle
+	var tangle = Math.atan2(tY, tX); // tangle < PI -> food is below us
 
-	for(var i = 0; i != foods.length; i++){
-	    var f = foods[i];
-	    if(!f)
-		continue;
-	    
-	    var dx = (f.rx - s.pts[s.pts.length-1].xx); // dx > 0 -> food is to our right
-	    var dy = (f.ry - s.pts[s.pts.length-1].yy); // dy > 0 -> food is below us
-	    var d = Math.pow(dx * dx + dy * dy, 0.5); // consider L1
-	    var size = f.sz;
-	    var fangle = Math.atan(dy, dx); // fangle > 0 -> food is below us
-	    var dangle = fangle - mangle; // abs(dangle) > pi -> turn right
-	    sum += (Math.abs(dangle) > PI) ? size / d : -size / d;
-
-	    f.rad = size / 5; // just for visuals
-	}	
-	// pass vector to net
-	console.log((sum > 0 ? 'food to right' : 'food to left'), Math.abs(sum));
-	if(sum > 0)
-	    net.setInput([0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1]);
+	// get turn
+	var dangle = tangle - mangle; // abs(dangle) > pi -> turn right
+	if(dangle > PI)
+	    var t = dangle - twoPI;
+	else if(dangle <= -PI)
+	    var t = dangle + twoPI;
 	else
-	    net.setInput([0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1,0]);
+	    var t = dangle;
 
-	//var NUM_STEPS = 10; // number of timesteps the net experiences per game timestep
-	//for(var i=0; i!=NUM_STEPS; i++)
-	net.step();
+	
+	// pass turn to net
+	//console.log((t < 0 ? 'food to right' : 'food to left'), t);
+	//if(Math.abs(t) < 1)
+	if(t < 0){
+	    t = -t;
+	    var inputVec = [0,0,0,0,0,0,0,0,0,0,0,t,0,t,0,t,0,t];
+	}else{
+	    var inputVec = [0,0,0,0,0,0,0,0,0,0,t,0,t,0,t,0,t,0];
+	}
+	
+	// run net
+	var NUM_STEPS = 10; // number of timesteps the net experiences per game timestep
+	for(var i=0; i!=NUM_STEPS; i++){
+	    net.setInput(inputVec);
+	    net.step();
+	}
 	
 	// read output
-	vec = net.getOutput();
-	var sum = 0;
-	for(var i = 0; i != vec.length; i++)
-	    sum += (i & 1)? vec[i] : -vec[i]; // odd spots are right muscles, even are left muscles
+	var vec = net.getOutput();
 
-	// get new angle
-	var TURN_AMT = 0.15;
-	
-	console.log(sum > 0 ? 'turn right' : 'turn left');	
+	var lefts = 0;
+	for(var i = 0; i < vec.length; i+=2) // get even (left) muscles
+	    lefts += vec[i];
+	var rights = 0;
+	for(var i = 1; i < vec.length; i+=2) // get odd (right) muscles
+	    rights += vec[i];
 
-	if(sum > 0){ // turn right
-	    mangle += TURN_AMT;
-	    if(mangle > twoPI)
-		mangle -= twoPI;
-	}else{ // turn left
-	    mangle -= TURN_AMT;
-	    if(mangle < 0)
-		mangle += twoPI;
+	var accThresh =200;
+	if(lefts > accThresh || rights > accThresh){
+	    console.log('accelerating');
+	    console.log('sumL:', lefts);
+	    console.log('sumR:', rights);
+	    setAcceleration(1);
 	}
+	
+	var sum = rights - lefts;
+
+	var TURN_AMT = 0.2;
+	
+	//console.log(sum > 0 ? 'turn right' : 'turn left');
+
+	mangle += sum * TURN_AMT;
+	if(mangle > PI)
+	    mangle -= twoPI;
+	else if(mangle < 0){
+	    mangle += twoPI;
+	}
+	
 
 	// convert angle to vector
 	xm = Math.cos(mangle);
